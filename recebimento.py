@@ -1,11 +1,11 @@
 from time import time
 import json
 import hashlib
-from categorias import Categoria
+
 from urllib.parse import urlparse
 
 
-class BlockChain(Object):
+class BlockChain():
     """ Classe Principal que Representa a BlockChain """
 
     def __init__(self):
@@ -29,20 +29,24 @@ class BlockChain(Object):
         self.chain.append(block)
         return block
 
-    def transactions(self):
+    def pending_transactions(self):
         """ Todas as transações aguardando serem realizadas """
         return self.current_transactions
 
-    def full_transactions(self):
+    def transactions(self):
         """ Todas as transações realizadas na chain """
         return [block['transactions'] for block in self.chain]
 
+    def full_transactions(self):
+        """ Todas as transações existentes """
+        return self.transactions() + self.pending_transactions()
+
     def new_transaction(self, categoria, notas, empresa):
         """ Metodo responsável por criar uma nova transação """
-        transaction = {'categoria': categoria,
-                       'horario': time(),
+        transaction = {'empresa': empresa,
+                       'categoria': categoria,
                        'notas': notas,
-                       'empresa': empresa}
+                       'horario': time()}
 
         self.current_transactions.append(transaction)
 
