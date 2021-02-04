@@ -2,6 +2,7 @@ from time import time
 import json
 import hashlib
 from categorias import Categoria
+from urllib.parse import urlparse
 
 
 class BlockChain(Object):
@@ -36,17 +37,18 @@ class BlockChain(Object):
         """ Todas as transações realizadas na chain """
         return [block['transactions'] for block in self.chain]
 
-    def new_transaction(self, categoria, notas, placa):
+    def new_transaction(self, categoria, notas, empresa):
         """ Metodo responsável por criar uma nova transação """
         transaction = {'categoria': categoria,
                        'horario': time(),
                        'notas': notas,
-                       'placa': placa}
+                       'empresa': empresa}
 
         self.current_transactions.append(transaction)
 
     def blocks(self):
         """ Todos os blocos na chain """
+        return self.chain
 
     def last_block(self):
         """ Metodo responsavel por encontrar o ultimo bloco da chain"""
@@ -55,6 +57,26 @@ class BlockChain(Object):
     def full_chain(self):
         """ Metodo responsavel por retornar toda a chain e o tamanho dela """
         return self.chain, len(self.chain)
+
+    def proof_of_work(self, last_proof):
+        """ Metodo responsavel por gerar o proof of work """
+        proof = 0
+        while self.validate_proof(last_proof, proof) is False:
+            proof += 1
+
+        return proof
+
+    def register_nodes(self, address):
+        """ Metodo responsavel por registrar os nós de validação """
+        parsed_address = urlparse(address)
+        self.nodes.add(parsed_address.netloc)
+
+    @ staticmethod
+    def validate_proof(self, last_proof, current_proof):
+        """ Metodo responsavel por validar o proof """
+        proof = f'{self.last_block()}{self.current_transactions}'.encode()
+        proof_hash = hashlib.sha256(proof).hexdigest()
+        return proof_hash[:4] == '0000'
 
     @ staticmethod
     def hash(block):
