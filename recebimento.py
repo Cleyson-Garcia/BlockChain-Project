@@ -4,7 +4,7 @@ import hashlib
 from uuid import uuid4
 from urllib.parse import urlparse
 from categorias import Categoria
-from flask import flask, jsonify, request
+from flask import Flask, jsonify, request
 
 
 class BlockChain(object):
@@ -128,18 +128,41 @@ def new_transaction():
         'index': transaction_idx
     }
 
-    return sonify(response, 200)
-
-    def register_nodes(self, nodes):
-        for node in nodes:
-            self.blockChain.register_nodes(node)
+    return jsonify(response, 200)
 
 
-main_class = Main()
-transaction_idx = main_class.new_transaction(
-    categoria=Categoria.ENTRADA, empresa='Unilever', notas=['123', '497'])
-print(f'O id da transação é {transaction_idx}')
-new_block = main_class.mining()
-proof = new_block['proof']
-print(f'O proof do bloco é {proof}')
-print(main_class.blockChain.last_block)
+@app.route('/last', methods=['GET'])
+def last_block():
+    last_block = blockChain.last_block
+    response = {'index': last_block['index'],
+                'timestamp': last_block['timestamp'],
+                'transactions': last_block['transactions'],
+                'proof': last_block['proof'],
+                'previous_hash': last_block['previous_hash']}
+    return jsonify(response, 200)
+
+
+@app.route('/nodes/register', methods=['GET'])
+def register_nodes():
+    params = request.get_json()
+    for node in params['nodes']:
+        blockChain.register_nodes(node)
+
+    response = {
+        'message': 'New nodes registered',
+        'ammount': len(params['nodes'])
+    }
+    return jsonify(response, 200)
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+
+# main_class = Main()
+# transaction_idx = main_class.new_transaction(
+#     categoria=Categoria.ENTRADA, empresa='Unilever', notas=['123', '497'])
+# print(f'O id da transação é {transaction_idx}')
+# new_block = main_class.mining()
+# proof = new_block['proof']
+# print(f'O proof do bloco é {proof}')
+# print(main_class.blockChain.last_block)
