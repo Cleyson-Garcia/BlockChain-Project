@@ -1,11 +1,13 @@
 from time import time
 import json
 import hashlib
-
+from uuid import uuid4
 from urllib.parse import urlparse
+from categorias import Categoria
+from flask import flask, jsonify, request
 
 
-class BlockChain():
+class BlockChain(object):
     """ Classe Principal que Representa a BlockChain """
 
     def __init__(self):
@@ -21,7 +23,7 @@ class BlockChain():
                  'timestamp': time(),
                  'transactions': self.current_transactions,
                  'proof': proof,
-                 'previous_hash': previous_hash or self.hash(self.last_block())}
+                 'previous_hash': previous_hash or self.hash(self.last_block)}
 
         # Validar Bloco
         self.current_transactions = []
@@ -49,11 +51,13 @@ class BlockChain():
                        'horario': time()}
 
         self.current_transactions.append(transaction)
+        return int(self.last_block['index']) + 1
 
     def blocks(self):
         """ Todos os blocos na chain """
         return self.chain
 
+    @property
     def last_block(self):
         """ Metodo responsavel por encontrar o ultimo bloco da chain"""
         return self.chain[-1]
@@ -76,14 +80,66 @@ class BlockChain():
         self.nodes.add(parsed_address.netloc)
 
     @ staticmethod
-    def validate_proof(self, last_proof, current_proof):
+    def validate_proof(last_proof, current_proof):
         """ Metodo responsavel por validar o proof """
-        proof = f'{self.last_block()}{self.current_transactions}'.encode()
-        proof_hash = hashlib.sha256(proof).hexdigest()
-        return proof_hash[:4] == '0000'
+        proof = f'{last_proof}{current_proof}'.encode()
+        proof_hash = hashlib.md5(proof).hexdigest()
+        return proof_hash[:4] == '0010'
 
     @ staticmethod
     def hash(block):
         """ Metodo responsavel por criar o hash do bloco """
         block_str = json.dumps(block, sort_keys=True).encode()  # obj -> string
-        return hashlib.sha256(block_str).hexdigest()
+        return hashlib.md5(block_str).hexdigest()
+
+
+app = Flask(__name__)
+blockChain = BlockChain()
+node_identifier = str(uuid4()).replace('-', '')
+
+
+@app.route('/mining', methods=['GET'])
+def mining():
+    last_block = blockChain.last_block
+    last_proof = last_block['proof']
+
+    proof = blockChain.proof_of_work(last_proof)
+    previous_hash = blockChain.hash(last_block)
+    block = blockChain.new_block(proof, previous_hash)
+
+    # Validações para o bloco
+
+    response = {
+        'message': 'New block created',
+        'index': block['index'],
+        'proof': block['proof']}
+
+    return jsonify(response, 200)
+
+
+@app.route('/transaction/new', methods=['GET'])
+def new_transaction():
+    params = request.get_json()
+    transaction_idx = blockChain.new_transaction(
+        categoria=params['categoria'], notas=params['notas'], empresa=params['empresa'])
+
+    response = {
+        'message': 'New transaction created',
+        'index': transaction_idx
+    }
+
+    return sonify(response, 200)
+
+    def register_nodes(self, nodes):
+        for node in nodes:
+            self.blockChain.register_nodes(node)
+
+
+main_class = Main()
+transaction_idx = main_class.new_transaction(
+    categoria=Categoria.ENTRADA, empresa='Unilever', notas=['123', '497'])
+print(f'O id da transação é {transaction_idx}')
+new_block = main_class.mining()
+proof = new_block['proof']
+print(f'O proof do bloco é {proof}')
+print(main_class.blockChain.last_block)
