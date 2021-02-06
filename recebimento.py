@@ -31,14 +31,17 @@ class BlockChain(object):
         self.chain.append(block)
         return block
 
+    @property
     def pending_transactions(self):
         """ Todas as transações aguardando serem realizadas """
         return self.current_transactions
 
+    @property
     def transactions(self):
         """ Todas as transações realizadas na chain """
         return [block['transactions'] for block in self.chain]
 
+    @property
     def full_transactions(self):
         """ Todas as transações existentes """
         return self.transactions() + self.pending_transactions()
@@ -53,6 +56,7 @@ class BlockChain(object):
         self.current_transactions.append(transaction)
         return int(self.last_block['index']) + 1
 
+    @property
     def blocks(self):
         """ Todos os blocos na chain """
         return self.chain
@@ -94,6 +98,7 @@ class BlockChain(object):
 
 
 app = Flask(__name__)
+app.testing = True
 blockChain = BlockChain()
 node_identifier = str(uuid4()).replace('-', '')
 
@@ -125,7 +130,8 @@ def new_transaction():
 
     response = {
         'message': 'New transaction created',
-        'index': transaction_idx
+        'index': transaction_idx,
+        'transaction': blockChain.pending_transactions[-1]
     }
 
     return jsonify(response, 200)
@@ -156,7 +162,7 @@ def register_nodes():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
 # main_class = Main()
 # transaction_idx = main_class.new_transaction(
